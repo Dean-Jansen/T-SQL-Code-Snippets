@@ -3,7 +3,7 @@
 
 ----------------------
 
-### Find all tables containing column with specified name
+### Find All tables Containing Column With Specified Name
 
 ```SQL
 select * from INFORMATION_SCHEMA.COLUMNS 
@@ -32,7 +32,7 @@ cross apply sys.dm_exec_query_plan (qs.plan_handle) AS qp
 ORDER BY 1 DESC
 ```
 
-### Find all Databases and Size of each
+### Find all Databases and Size of Each
 
 ```SQL
 SELECT DB_NAME(database_id) AS name_of_base, CAST(SUM(size) * 8. / 1024 AS DECIMAL(8,2)) AS total_size_b
@@ -40,7 +40,7 @@ FROM sys.master_files
 GROUP BY database_id
 ```
 
-### Find all Tables in DB, Including the size and row count
+### Find All Tables in DB, Including The Size and Row Count
 
 ```SQL
 SELECT t.name AS table_name, p.rows AS table_rows, SUM(a.total_pages) * 8. / 1024 AS table_size
@@ -52,16 +52,79 @@ GROUP BY t.name, p.rows, a.total_pages
 ```
 
 
-### Find all contraints
+### Find All Contraints
 
 ```SQL
 SELECT * FROM sys.objects
 WHERE type_desc LIKE '%CONSTRAINT'
 ```
 
+### Find SQL Job Step History
+
+```SQL
+select 
+ j.name as 'JobName',
+ s.step_id as 'Step',
+ s.step_name as 'StepName',
+ msdb.dbo.agent_datetime(run_date, run_time) as 'RunDateTime',
+ ((run_duration/10000*3600 + (run_duration/100)%100*60 + run_duration%100 + 31 ) / 60) 
+         as 'RunDurationMinutes',
+[message]
+From msdb.dbo.sysjobs j 
+INNER JOIN msdb.dbo.sysjobsteps s 
+ ON j.job_id = s.job_id
+INNER JOIN msdb.dbo.sysjobhistory h 
+ ON s.job_id = h.job_id 
+ AND s.step_id = h.step_id 
+ AND h.step_id <> 0
+where j.name like 'LPD-SQLstaging%' 
+and s.step_Name = 'STG_Port_Product_Target'
+
+order by JobName, RunDateTime desc
+```
+
+### Find All Foreign Keys
+
+```SQL
+select 
+ j.name as 'JobName',
+ s.step_id as 'Step',
+ s.step_name as 'StepName',
+ msdb.dbo.agent_datetime(run_date, run_time) as 'RunDateTime',
+ ((run_duration/10000*3600 + (run_duration/100)%100*60 + run_duration%100 + 31 ) / 60) 
+         as 'RunDurationMinutes',
+[message]
+From msdb.dbo.sysjobs j 
+INNER JOIN msdb.dbo.sysjobsteps s 
+ ON j.job_id = s.job_id
+INNER JOIN msdb.dbo.sysjobhistory h 
+ ON s.job_id = h.job_id 
+ AND s.step_id = h.step_id 
+ AND h.step_id <> 0
+where j.name like 'LPD-SQLstaging%' 
+and s.step_Name = 'STG_Port_Product_Target'
+
+order by JobName, RunDateTime desc
+```
 
 
+### Get fragmentation level of SQL Index
 
+```SQL
+SELECT dbschemas.[name] as 'Schema', 
+dbtables.[name] as 'Table', 
+dbindexes.[name] as 'Index',
+indexstats.alloc_unit_type_desc,
+indexstats.avg_fragmentation_in_percent,
+indexstats.page_count
+FROM sys.dm_db_index_physical_stats (DB_ID(), NULL, NULL, NULL, NULL) AS indexstats
+INNER JOIN sys.tables dbtables on dbtables.[object_id] = indexstats.[object_id]
+INNER JOIN sys.schemas dbschemas on dbtables.[schema_id] = dbschemas.[schema_id]
+INNER JOIN sys.indexes AS dbindexes ON dbindexes.[object_id] = indexstats.[object_id]
+AND indexstats.index_id = dbindexes.index_id
+WHERE indexstats.database_id = DB_ID() --and dbtables.name = 'tblDIP_AttributeValues'
+ORDER BY indexstats.avg_fragmentation_in_percent desc
+```
 
 
 
