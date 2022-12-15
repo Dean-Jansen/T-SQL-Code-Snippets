@@ -126,6 +126,9 @@ WHERE indexstats.database_id = DB_ID() --and dbtables.name = 'tblDIP_AttributeVa
 ORDER BY indexstats.avg_fragmentation_in_percent desc
 ```
 
+### Get all tables and column using data type
 
-
-
+```
+SELECT table_name [Table Name], column_name [Column Name]
+FROM information_schema.columns where data_type = 'int'
+```
