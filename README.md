@@ -128,7 +128,7 @@ ORDER BY indexstats.avg_fragmentation_in_percent desc
 
 ### Get all tables and column using data type
 
-```
+```SQL
 SELECT table_name [Table Name], column_name [Column Name]
 FROM information_schema.columns where data_type = 'int'
 ```
